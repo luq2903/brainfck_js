@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brainfuck Simulator</title>
+    <style>
+        .textarea-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        textarea {
+            width: 300px;
+            height: 150px;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .submit-button {
+            position: absolute;
+            bottom: 10px; /* Adjust as needed */
+            right: 10px;  /* Adjust as needed */
+            padding: 10px 20px;
+            background-color: purple;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div class="textarea-container">
+    <textarea id="USER_INPUT" rows="10" cols="30" required></textarea>
+    <button type="submit" onclick="executeCode()" class="submit-button">Execute</button>
+</div>
+
+<textarea id='USER_OUTPUT' disabled></textarea>
+
+<script>
+    const textareaField = document.getElementById('USER_INPUT');
+
+    textareaField.addEventListener('input', function () {
+        this.value = this.value.replace(/[^><+\-.,\[\]]/g, '');
+    });
+
+    function executeCode() {
+        const input = textareaField.value;
+        
+        let bf_array = {
+            pointer: 0,
+            array: new Array(256).fill(0), 
+            output: ''
+        };
+
+        let loopStack = []; // manage loops
+        const userOutput = document.getElementById('USER_OUTPUT');
+        
+        for (let z = 0; z < input.length; z++) {
+            switch (input[z]) {
+                case '>':
+                    bf_array.pointer++;
+                    if (bf_array.pointer >= bf_array.array.length) bf_array.pointer = 0;
+                    break; 
+                case '<':
+                    bf_array.pointer--;
+                    if (bf_array.pointer < 0) bf_array.pointer = bf_array.array.length - 1; 
+                    break;
+                case '+':
+                    bf_array.array[bf_array.pointer] = (bf_array.array[bf_array.pointer] + 1) % 256; 
+                    break;
+                case '-':
+                    bf_array.array[bf_array.pointer] = (bf_array.array[bf_array.pointer] - 1 + 256) % 256; 
+                    break;
+                case '[':
+                    if (bf_array.array[bf_array.pointer] === 0) {
+                        let openBrackets = 1;
+                        while (openBrackets > 0) {
+                            z++;
+                            if (input[z] === '[') openBrackets++;
+                            else if (input[z] === ']') openBrackets--;
+                        }
+                    } else {
+                        loopStack.push(z); // record stack position
+                    }
+                    break;
+                case ']':
+                    if (bf_array.array[bf_array.pointer] !== 0) {
+                        z = loopStack[loopStack.length - 1]; // Go back to matching '['
+                    } else {
+                        loopStack.pop(); // delete stack position
+                    }
+                    break;
+                case '.':
+                    bf_array.output += String.fromCharCode(bf_array.array[bf_array.pointer]);
+                    userOutput.value = bf_array.output;
+                    console.log(bf_array);
+                    break;
+            }
+        }
+    }
+</script>
+
+</body>
+</html>
+
